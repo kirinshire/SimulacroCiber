@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulacro de Ciberseguridad - Modo Desafío</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .option-btn:disabled {
+            cursor: not-allowed;
+        }
+        .correct {
+            background-color: #22c55e !important;
+            color: white;
+            border-color: #16a3a;
+        }
+        .incorrect {
+            background-color: #ef4444 !important;
+            color: white;
+            border-color: #dc2626;
+        }
+        .review-correct {
+            border-left: 4px solid #22c55e;
+        }
+        .review-incorrect {
+            border-left: 4px solid #ef4444;
+        }
+        .points-popup {
+            animation: fadeUp 1.5s ease-out forwards;
+        }
+        @keyframes fadeUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <div id="quiz-container" class="w-full max-w-3xl mx-auto bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-2xl border border-slate-700">
+        
+        <!-- Pantalla de Inicio -->
+        <div id="start-screen">
+            <h1 class="text-3xl sm:text-4xl font-bold text-center text-cyan-400 mb-4">🛡️ Desafío de Ciberseguridad 🛡️</h1>
+            <p class="text-slate-300 text-center mb-2">¡Pon a prueba tus habilidades! Responde rápido para ganar más puntos y consigue rachas de aciertos para multiplicar tu puntaje.</p>
+            <p class="text-slate-400 text-center text-sm mb-8">Tienes 30 segundos por pregunta.</p>
+            <button id="start-btn" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition-transform transform hover:scale-105">
+                Iniciar Desafío
+            </button>
+        </div>
+
+        <!-- Pantalla del Quiz -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <h2 class="text-xl sm:text-2xl font-bold text-cyan-400">Pregunta <span id="question-number"></span>/63</h2>
+                <div class="flex items-center gap-4">
+                    <div id="timer" class="text-lg font-bold bg-slate-700 px-4 py-2 rounded-lg w-20 text-center">
+                        <span id="time-left">30</span>s
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Barra de Puntuación y Racha -->
+            <div class="flex justify-between items-center mb-4 bg-slate-900 p-2 rounded-lg">
+                <div class="text-lg font-semibold px-4 py-2 rounded-lg">Puntos: <span id="score">0</span></div>
+                <div id="streak-indicator" class="text-lg font-bold text-orange-400 px-4 py-2 rounded-lg transition-all duration-300 scale-0">🔥 Racha x<span id="streak-counter"></span></div>
+                 <div id="points-earned-popup" class="points-popup absolute right-10 top-20 text-lg font-bold text-green-400 opacity-0"></div>
+            </div>
+
+            <div class="bg-slate-900 p-4 rounded-lg mb-6">
+                <p id="question-text" class="text-lg sm:text-xl text-slate-200 leading-relaxed"></p>
+            </div>
+    
+            <div id="options-container" class="space-y-3"></div>
+            
+            <div id="feedback-container" class="hidden mt-4 p-4 bg-slate-900 rounded-lg">
+                <p id="feedback-text" class="text-slate-300"></p>
+            </div>
+    
+            <div class="mt-8 text-right">
+                <button id="next-btn" class="bg-gray-500 cursor-not-allowed text-white font-bold py-2 px-6 rounded-lg transition-colors" disabled>Siguiente</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Resultados -->
+        <div id="result-screen" class="hidden text-center">
+            <h2 class="text-3xl font-bold text-cyan-400 mb-4">¡Desafío completado!</h2>
+            <p class="text-xl text-slate-300 mb-6">Tu puntuación final es:</p>
+            <div class="text-6xl font-bold text-white mb-8" id="final-score"></div>
+            <p class="text-slate-400 mb-8" id="feedback-message"></p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="restart-btn" class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105">
+                    Intentar de Nuevo
+                </button>
+                <button id="review-btn" class="w-full sm:w-auto bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105">
+                    Revisar Respuestas
+                </button>
+            </div>
+        </div>
+        
+        <!-- Pantalla de Revisión -->
+        <div id="review-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-cyan-400 mb-6 text-center">Revisión de Respuestas</h2>
+            <div id="review-container" class="space-y-6 max-h-[70vh] overflow-y-auto pr-2"></div>
+            <div class="mt-8 text-center">
+                <button id="back-to-results-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg">
+                    Volver a Resultados
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- PREGUNTAS DEL SIMULACRO CON EXPLICACIONES ---
+        const questions = [
+            { question: "Una empresa de redes sociales utiliza los datos de geolocalización de sus usuarios para vender espacios publicitarios a negocios locales. Aunque esto es rentable, ¿cuál es la principal implicación ética que la empresa debe considerar?", options: ["La eficiencia técnica de sus algoritmos de recomendación.", "El potencial impacto en la privacidad de los usuarios al revelar sus patrones de movimiento.", "Los costos de almacenamiento de grandes volúmenes de datos de geolocalización."], answer: "El potencial impacto en la privacidad de los usuarios al revelar sus patrones de movimiento.", explanation: "La privacidad es el principal derecho afectado, ya que se exponen hábitos y rutinas personales." },
+            { question: "Una finca cafetalera en Costa Rica instala sensores en sus cultivos para optimizar el riego, unificando datos del clima, maquinaria y trabajadores. ¿Qué concepto describe mejor esta implementación?", options: ["Computación en la nube.", "Internet de Todo (IdT).", "Big Data."], answer: "Internet de Todo (IdT).", explanation: "El IdT conecta personas, procesos, datos y objetos (sensores, maquinaria), que es exactamente lo que describe el escenario." },
+            { question: "Un hospital sufre un ataque de ransomware y los expedientes médicos quedan inaccesibles. ¿Cuál es el impacto más crítico sobre el principio de Disponibilidad?", options: ["Los datos médicos podrían ser alterados.", "La información confidencial podría ser revelada.", "Los doctores no pueden acceder a los historiales para tratar a los pacientes."], answer: "Los doctores no pueden acceder a los historiales para tratar a los pacientes.", explanation: "El ransomware bloquea el acceso a los datos, impidiendo que estén disponibles para quienes los necesitan (los doctores)." },
+            { question: "Un analista debe proteger una base de datos de clientes. ¿Cuál es un procedimiento fundamental para el mantenimiento seguro de esos datos?", options: ["Realizar copias de seguridad periódicas y almacenarlas en una ubicación segura y aislada.", "Aumentar la capacidad del disco duro.", "Compartir el acceso con todos los departamentos."], answer: "Realizar copias de seguridad periódicas y almacenarlas en una ubicación segura y aislada.", explanation: "Las copias de seguridad garantizan que los datos se puedan restaurar en caso de pérdida o ataque, asegurando su integridad y disponibilidad." },
+            { question: "Un usuario recibe un correo falso de su banco que lo redirige a un sitio web idéntico para robar sus credenciales. ¿Qué tipo de ataque es este?", options: ["Spyware.", "Ataque de denegación de servicio (DDoS).", "Phishing."], answer: "Phishing.", explanation: "Es un ataque de ingeniería social que suplanta la identidad de una entidad de confianza para robar credenciales." },
+            { question: "Un administrador configura permisos para que solo el departamento de finanzas pueda acceder a los informes de presupuesto. ¿Qué técnica de control de acceso se está aplicando?", options: ["Cifrado de datos en tránsito.", "Autenticación de dos factores (2FA).", "Listas de Control de Acceso (ACL)."], answer: "Listas de Control de Acceso (ACL).", explanation: "Las Listas de Control de Acceso (ACL) son reglas que definen qué usuarios pueden acceder a qué recursos." },
+            { question: "En programación orientada a objetos, ¿cómo se llama la plantilla o 'molde' para crear objetos con propiedades y comportamientos comunes?", options: ["Función.", "Clase.", "Variable."], answer: "Clase.", explanation: "Una clase es la plantilla o plano a partir del cual se crean objetos individuales en la programación orientada a objetos." },
+            { question: "Una organización implementa un conjunto de políticas, procedimientos y controles para gestionar sistemáticamente su información sensible. Este enfoque integral es conocido como:", options: ["Plan de Recuperación de Desastres (DRP).", "Sistema de Gestión de Seguridad de la Información (SGSI).", "Análisis de Vulnerabilidades."], answer: "Sistema de Gestión de Seguridad de la Información (SGSI).", explanation: "Un SGSI (como el basado en ISO 27001) es un marco de gestión completo para la seguridad de la información." },
+            { question: "Un programador necesita ejecutar una acción repetidamente mientras una condición sea verdadera (ej. solicitar una contraseña hasta que sea correcta). ¿Qué herramienta de control de flujo debería utilizar?", options: ["Una estructura condicional (if-else).", "Un bucle (while o for).", "Un operador de asignación."], answer: "Un bucle (while o for).", explanation: "Los bucles (while, for) están diseñados específicamente para repetir un bloque de código mientras se cumpla una condición." },
+            { question: "Para evitar que un programa se cierre al intentar dividir por cero, ¿qué estructura se usa para 'atrapar' y manejar el error de forma controlada?", options: ["Un bucle `for`.", "Una declaración `import`.", "Un bloque `try-except`."], answer: "Un bloque `try-except`.", explanation: "Este bloque permite 'intentar' ejecutar un código que podría fallar y 'excepto' (atrapar) el error para manejarlo sin que el programa se caiga." },
+            { question: "Una empresa usa un software para leer facturas en PDF e ingresarlas automáticamente en el sistema contable. Este proceso que imita acciones humanas repetitivas es un ejemplo de:", options: ["Inteligencia Artificial (IA).", "Automatización Robótica de Procesos (RPA).", "Aprendizaje Automático (Machine Learning)."], answer: "Automatización Robótica de Procesos (RPA).", explanation: "La RPA se especializa en automatizar tareas repetitivas y basadas en reglas que normalmente realiza un humano." },
+            { question: "¿Cuál es uno de los principales beneficios de implementar la Automatización Robótica de Procesos (RPA)?", options: ["Aumento de la creatividad en los empleados.", "Reducción de errores humanos y aumento de la eficiencia.", "Mejora de las relaciones interpersonales."], answer: "Reducción de errores humanos y aumento de la eficiencia.", explanation: "La principal ventaja de la RPA es eliminar el error humano en tareas monótonas y aumentar la velocidad y eficiencia." },
+            { question: "Un usuario desea un sistema operativo que le permita acceder y modificar libremente el código fuente. ¿Cuál de estos cumple con esa característica?", options: ["Windows.", "macOS.", "Linux."], answer: "Linux.", explanation: "Linux es el sistema operativo de código abierto más conocido, permitiendo a cualquiera ver, modificar y distribuir su código fuente." },
+            { question: "Una aplicación diseñada para 64 bits se intenta instalar en un sistema operativo de 32 bits. ¿Qué sucederá?", options: ["Funcionará más lentamente.", "El sistema operativo no permitirá la instalación por incompatibilidad.", "Se instalará con funciones limitadas."], answer: "El sistema operativo no permitirá la instalación por incompatibilidad.", explanation: "Una aplicación de 64 bits requiere una arquitectura de 64 bits para funcionar; no es compatible con sistemas de 32 bits." },
+            { question: "En el ciclo de vida de un sistema, la fase donde se identifican y evalúan amenazas y vulnerabilidades antes de la producción se conoce como:", options: ["Mantenimiento.", "Análisis de riesgos.", "Despliegue."], answer: "Análisis de riesgos.", explanation: "Esta fase es crucial para identificar proactivamente las debilidades del sistema antes de que sea expuesto a amenazas reales." },
+            { question: "Un desarrollador implementa un Web Application Firewall (WAF) para proteger contra ataques como SQL Injection. ¿A qué capa de protección corresponde esta medida?", options: ["Capa de Red.", "Capa de Sistema Operativo.", "Capa de Aplicación."], answer: "Capa de Aplicación.", explanation: "Un WAF opera en la Capa 7 (Aplicación) del modelo OSI, inspeccionando el tráfico HTTP para proteger las aplicaciones web." },
+            { question: "Una startup contrata un servicio en la nube que le provee infraestructura, sistema operativo y entorno de ejecución listos para desplegar su app. ¿Qué modelo de servicio es?", options: ["Infraestructura como Servicio (IaaS).", "Plataforma como Servicio (PaaS).", "Software como Servicio (SaaS)."], answer: "Plataforma como Servicio (PaaS).", explanation: "PaaS ofrece una plataforma completa (infraestructura + entorno de ejecución) para que los desarrolladores se centren solo en su código." },
+            { question: "Una empresa utiliza Microsoft 365 para correo y ofimática, accediendo a través de un navegador web y pagando una suscripción. ¿Qué tipo de servicio en la nube es?", options: ["IaaS.", "PaaS.", "SaaS."], answer: "SaaS.", explanation: "Software como Servicio (SaaS) son aplicaciones listas para usar a las que se accede por internet, como Microsoft 365 o Gmail." },
+            { question: "En el modelo de responsabilidad compartida de la nube, ¿de qué es siempre responsable el cliente, incluso en un modelo SaaS?", options: ["La seguridad física del centro de datos.", "La gestión y protección de sus propios datos y el control de acceso de sus usuarios.", "El mantenimiento del hardware del servidor."], answer: "La gestión y protección de sus propios datos y el control de acceso de sus usuarios.", explanation: "El cliente siempre es responsable de sus datos y de quién accede a ellos, sin importar el modelo de servicio." },
+            { question: "La tendencia de desarrollo seguro 'Shift Left' se refiere a:", options: ["Mover las pruebas de seguridad al final del ciclo.", "Integrar la seguridad en las etapas más tempranas del desarrollo.", "Desplazar la responsabilidad de la seguridad solo a operaciones."], answer: "Integrar la seguridad en las etapas más tempranas del desarrollo.", explanation: "Significa 'desplazar a la izquierda' las prácticas de seguridad en la línea de tiempo del desarrollo, integrándolas desde el inicio." },
+            { question: "Aplicando la Ley de Murphy, un administrador instala un UPS y un generador de respaldo. ¿Qué principio de seguridad está reforzando?", options: ["Confidencialidad.", "Disponibilidad.", "Integridad."], answer: "Disponibilidad.", explanation: "Las UPS y generadores aseguran que el sistema siga funcionando (esté disponible) incluso si falla la energía principal." },
+            { question: "Según OWASP, ¿cómo se conoce el riesgo de incluir datos de usuario en una consulta a la base de datos sin validarlos, permitiendo manipularla?", options: ["Cross-Site Scripting (XSS).", "Falsificación de Solicitudes en Sitios Cruzados (CSRF).", "Inyección SQL (SQLi)."], answer: "Inyección SQL (SQLi).", explanation: "Este ataque consiste en 'inyectar' código SQL malicioso a través de la entrada del usuario para manipular la base de datos." },
+            { question: "Un supermercado analiza historiales de compra para descubrir patrones ocultos (ej. quienes compran pañales también compran cerveza). ¿Qué proceso se está utilizando?", options: ["Inteligencia de Negocios (BI).", "Minería de Datos.", "Almacenamiento de Datos (Data Warehousing)."], answer: "Minería de Datos.", explanation: "Es el proceso de descubrir patrones y correlaciones en grandes conjuntos de datos para predecir resultados." },
+            { question: "Un gerente usa dashboards con gráficos en tiempo real para visualizar ventas e inventario y tomar decisiones informadas. Esto es un componente de:", options: ["Inteligencia de Negocios (BI).", "Seguridad de bases de datos.", "Minería de texto."], answer: "Inteligencia de Negocios (BI).", explanation: "BI se enfoca en usar datos para tomar mejores decisiones de negocio, a menudo a través de dashboards y reportes." },
+            { question: "Un atacante accede a una base de datos porque usaba la contraseña por defecto ('admin123'). Esta es una vulnerabilidad de:", options: ["Configuraciones de seguridad débiles o por defecto.", "Inyección SQL.", "Cifrado de datos insuficiente."], answer: "Configuraciones de seguridad débiles o por defecto.", explanation: "Usar credenciales por defecto es una de las vulnerabilidades de configuración más comunes y peligrosas." },
+            { question: "¿Cuál es una práctica recomendada para la gestión de contraseñas y la defensa activa?", options: ["Reutilizar la misma contraseña en múltiples servicios.", "Usar un gestor de contraseñas para crear y almacenar claves complejas y únicas.", "Escribir las contraseñas en un papel y pegarlo en el monitor."], answer: "Usar un gestor de contraseñas para crear y almacenar claves complejas y únicas.", explanation: "Un gestor de contraseñas es la herramienta recomendada para crear contraseñas fuertes y únicas sin tener que memorizarlas." },
+            { question: "Un usuario desea proteger su computadora portátil contra accesos no autorizados. ¿Cuál de las siguientes estrategias combina múltiples capas para una seguridad efectiva?", options: ["Utilizar únicamente un protector de pantalla con contraseña.", "Instalar un software antivirus, mantener el sistema operativo actualizado y configurar un firewall personal.", "Aumentar la memoria RAM del equipo para mejorar su rendimiento."], answer: "Instalar un software antivirus, mantener el sistema operativo actualizado y configurar un firewall personal.", explanation: "La seguridad efectiva se basa en capas (defensa en profundidad). Combinar antivirus, actualizaciones y firewall protege contra diferentes tipos de amenazas." },
+            { question: "Para proteger la información de una tarjeta de crédito durante una compra en línea, se utiliza un protocolo que cifra la comunicación. ¿Cuál es esta tecnología?", options: ["El protocolo FTP para la transferencia de archivos.", "El protocolo TLS/SSL, identificado por el 'https' en la URL.", "El direccionamiento IP para identificar el equipo."], answer: "El protocolo TLS/SSL, identificado por el 'https' en la URL.", explanation: "TLS/SSL (HTTPS) es el estándar para cifrar la comunicación web, asegurando la confidencialidad e integridad de los datos en tránsito." },
+            { question: "Un administrador de Linux aplica el principio de 'mínimo privilegio'. ¿Qué acción aplicaría para lograrlo?", options: ["Otorgar a todos los usuarios permisos de 'root'.", "Configurar permisos de lectura, escritura y ejecución de forma granular para cada grupo de usuarios.", "Desactivar todas las actualizaciones automáticas del sistema."], answer: "Configurar permisos de lectura, escritura y ejecución de forma granular para cada grupo de usuarios.", explanation: "El principio de mínimo privilegio consiste en dar a los usuarios solo los permisos que necesitan para su trabajo, y la configuración granular lo permite." },
+            { question: "Una empresa implementa un sistema SIEM. ¿Cuál es el primer paso crucial en su configuración?", options: ["Crear reglas de correlación complejas.", "Configurar los dispositivos de red para que envíen sus registros al SIEM.", "Generar informes ejecutivos."], answer: "Configurar los dispositivos de red para que envíen sus registros al SIEM.", explanation: "Un SIEM necesita datos para funcionar. El primer paso es siempre la recolección de logs desde las fuentes de datos (firewalls, servidores, etc.)." },
+            { question: "Tras un incidente, un analista crea una copia exacta, bit a bit, del disco duro afectado para analizarla sin alterar la evidencia original. ¿Qué técnica se está aplicando?", options: ["Análisis de vulnerabilidades.", "Creación de una imagen forense.", "Auditoría de seguridad automatizada."], answer: "Creación de una imagen forense.", explanation: "Una imagen forense es una copia bit a bit que permite un análisis seguro sin comprometer la integridad de la evidencia original." },
+            { question: "Un desarrollador necesita probar su aplicación en Windows, Ubuntu y macOS usando una sola computadora portátil. ¿Qué tecnología se lo permite?", options: ["La computación en la nube.", "El arranque dual (dual-boot).", "La virtualización, utilizando un hipervisor como VirtualBox o VMware."], answer: "La virtualización, utilizando un hipervisor como VirtualBox o VMware.", explanation: "La virtualización permite crear máquinas virtuales, que son sistemas operativos completos que se ejecutan de forma aislada sobre el sistema operativo anfitrión." },
+            { question: "¿Cuál es la relación principal entre la computación en la nube y el uso de dispositivos portátiles en un entorno empresarial?", options: ["Permite a los usuarios acceder a aplicaciones y datos desde sus portátiles en cualquier lugar.", "Aumenta la capacidad de procesamiento del hardware del equipo portátil.", "Es un requisito para poder instalar un sistema operativo."], answer: "Permite a los usuarios acceder a aplicaciones y datos desde sus portátiles en cualquier lugar.", explanation: "La nube centraliza los datos y servicios, haciéndolos accesibles desde cualquier dispositivo con internet, lo que potencia la movilidad." },
+            { question: "Una PYME con 15 empleados en la misma oficina necesita compartir una impresora y archivos. ¿Qué tipo de red es la más adecuada?", options: ["Una Red de Área Amplia (WAN).", "Una Red de Área Local (LAN).", "Una Red de Área Metropolitana (MAN)."], answer: "Una Red de Área Local (LAN).", explanation: "Una LAN (Red de Área Local) está diseñada para cubrir un área geográfica pequeña como una oficina, siendo ideal para compartir recursos locales." },
+            { question: "¿Qué dispositivo es fundamental para interconectar múltiples redes y reenviar paquetes entre una LAN e internet (WAN)?", options: ["Switch.", "Hub.", "Router."], answer: "Router.", explanation: "La función principal de un router es enrutar (dirigir) el tráfico entre diferentes redes basándose en las direcciones IP." },
+            { question: "¿Cuál es la función principal de los protocolos de red como TCP/IP?", options: ["Proteger la red contra malware.", "Establecer un conjunto de reglas y estándares para que los dispositivos puedan comunicarse.", "Aumentar la velocidad física de la conexión."], answer: "Establecer un conjunto de reglas y estándares para que los dispositivos puedan comunicarse.", explanation: "Los protocolos son como un idioma común que asegura que todos los dispositivos en una red puedan entenderse y comunicarse de manera ordenada." },
+            { question: "Un técnico dice que un problema está en la 'Capa 3, la del direccionamiento lógico'. ¿A qué capa del modelo OSI se refiere y qué protocolo opera en ella?", options: ["Capa 2 (Enlace de Datos), Protocolo Ethernet.", "Capa 3 (Red), Protocolo IP.", "Capa 4 (Transporte), Protocolo TCP."], answer: "Capa 3 (Red), Protocolo IP.", explanation: "La Capa 3 (Red) del modelo OSI es responsable del direccionamiento lógico y el enrutamiento, y su protocolo principal es el Protocolo de Internet (IP)." },
+            { question: "La dirección MAC (Media Access Control) es un identificador único para la tarjeta de red. ¿En qué capa del modelo OSI opera?", options: ["Capa 1 (Física).", "Capa 2 (Enlace de Datos).", "Capa 3 (Red)."], answer: "Capa 2 (Enlace de Datos).", explanation: "Las direcciones MAC se utilizan en la Capa 2 (Enlace de Datos) para la entrega de tramas en la red local." },
+            { question: "En una red Ethernet, cuando un switch recibe una trama destinada a una dirección MAC que ya conoce, ¿qué acción realiza?", options: ["Envía la trama a todos los puertos (broadcast).", "Descarta la trama.", "Envía la trama únicamente al puerto donde está conectado el dispositivo con esa MAC."], answer: "Envía la trama únicamente al puerto donde está conectado el dispositivo con esa MAC.", explanation: "Un switch inteligente mantiene una tabla de direcciones MAC para enviar el tráfico solo al puerto necesario, optimizando la red." },
+            { question: "Una computadora (Host A) conoce la IP del Host B en la misma LAN, pero necesita su dirección MAC. ¿Qué protocolo utiliza para descubrirla?", options: ["DHCP (Protocolo de Configuración Dinámica de Host).", "DNS (Sistema de Nombres de Dominio).", "ARP (Protocolo de Resolución de Direcciones)."], answer: "ARP (Protocolo de Resolución de Direcciones).", explanation: "ARP traduce direcciones de Capa 3 (IP) a direcciones de Capa 2 (MAC) dentro de una red local." },
+            { question: "¿Cuál es la principal ventaja de IPv6 sobre IPv4?", options: ["Es más rápido.", "Proporciona un espacio de direcciones mucho más grande.", "Es más sencillo de configurar manualmente."], answer: "Proporciona un espacio de direcciones mucho más grande.", explanation: "El agotamiento de las direcciones IPv4 fue la principal razón para crear IPv6, que ofrece una cantidad casi ilimitada de direcciones." },
+            { question: "Un servidor necesita enviar un paquete a todos los dispositivos dentro de su misma subred. ¿Qué tipo de dirección IPv4 debe usar como destino?", options: ["Unicast.", "Multicast.", "Broadcast."], answer: "Broadcast.", explanation: "Una dirección de broadcast está diseñada para que el paquete sea recibido y procesado por todos los hosts en la red local." },
+            { question: "Una aplicación de streaming de video en vivo prioriza la velocidad sobre la fiabilidad. ¿Qué protocolo de transporte es más adecuado?", options: ["TCP, porque es orientado a la conexión y garantiza la entrega.", "UDP, porque no es orientado a la conexión y tiene menor sobrecarga.", "ARP, porque resuelve direcciones físicas."], answer: "UDP, porque no es orientado a la conexión y tiene menor sobrecarga.", explanation: "UDP es ideal para aplicaciones en tiempo real (video, voz) donde una pequeña pérdida de paquetes es aceptable a cambio de una mayor velocidad." },
+            { question: "¿Qué protocolo de la capa de aplicación traduce nombres de dominio (www.google.com) en direcciones IP?", options: ["HTTP (Protocolo de Transferencia de Hipertexto).", "DNS (Sistema de Nombres de Dominio).", "SMTP (Protocolo para Transferencia Simple de Correo)."], answer: "DNS (Sistema de Nombres de Dominio).", explanation: "DNS funciona como la agenda telefónica de Internet, asociando nombres fáciles de recordar con las direcciones IP numéricas." },
+            { question: "¿Cuál es la diferencia fundamental entre un hacker ético (sombrero blanco) y un ciberdelincuente (sombrero negro)?", options: ["Las herramientas que utilizan.", "El permiso explícito de la organización y el objetivo de mejorar las defensas.", "El nivel de habilidad técnica."], answer: "El permiso explícito de la organización y el objetivo de mejorar las defensas.", explanation: "La ética y la legalidad, definidas por el permiso y la intención, son la línea divisoria clave, no las herramientas ni la habilidad." },
+            { question: "Un hacker ético está en la fase de 'Escaneo y Enumeración'. ¿Qué actividad estaría realizando?", options: ["Recopilar información pasivamente de fuentes públicas como el sitio web de la empresa.", "Intentar explotar una vulnerabilidad para ganar acceso a un sistema.", "Utilizar herramientas como Nmap para descubrir puertos abiertos, servicios en ejecución y sistemas activos en la red del objetivo."], answer: "Utilizar herramientas como Nmap para descubrir puertos abiertos, servicios en ejecución y sistemas activos en la red del objetivo.", explanation: "Esta fase implica interactuar activamente con el objetivo para mapear la red e identificar posibles puntos de entrada." },
+            { question: "Una empresa instala paneles solares y cambia su iluminación a LED. Estas acciones están orientadas a cumplir con políticas de:", options: ["La seguridad física de las instalaciones.", "El desarrollo energético sostenible y la eficiencia energética.", "La gestión de la cadena de suministro."], answer: "El desarrollo energético sostenible y la eficiencia energética.", explanation: "Ambas medidas buscan reducir el consumo de energía y utilizar fuentes más limpias, lo cual es la base de la sostenibilidad energética." },
+            { question: "Si un servidor consume 500 Watts y opera durante 10 horas, ¿cuál es su consumo energético en kilowatts-hora (kWh)?", options: ["50 kWh.", "5 kWh.", "0.5 kWh."], answer: "5 kWh.", explanation: "Cálculo: (500 Watts / 1000) = 0.5 kW. Luego, 0.5 kW * 10 horas = 5 kWh." },
+            { question: "Un técnico necesita acceder a la interfaz de línea de comandos (CLI) de un switch Cisco nuevo para realizar su configuración inicial. ¿Qué método de conexión utilizaría comúnmente?", options: ["Acceder a través de una dirección IP usando Telnet.", "Usar un cable de consola conectado directamente al puerto de consola del switch y a un puerto serial/USB de la computadora.", "Conectarse a la red Wi-Fi que el switch emite por defecto."], answer: "Usar un cable de consola conectado directamente al puerto de consola del switch y a un puerto serial/USB de la computadora.", explanation: "La conexión por consola es el método estándar para la configuración inicial 'fuera de banda', ya que no requiere configuración de red previa." },
+            { question: "En una red conmutada (switched), un switch de Capa 2 toma decisiones de reenvío de tramas basándose principalmente en:", options: ["Direcciones IP de destino.", "Direcciones MAC de destino.", "Números de puerto TCP/UDP."], answer: "Direcciones MAC de destino.", explanation: "Los switches de Capa 2 operan en la capa de enlace de datos, utilizando direcciones físicas (MAC) para conmutar tramas en la LAN." },
+            { question: "Dos computadoras en diferentes VLANs (VLAN 10 y VLAN 20) no pueden comunicarse entre sí. La red utiliza un switch de Capa 3 para el enrutamiento. ¿Cuál es la causa más probable del problema?", options: ["El protocolo Spanning Tree ha bloqueado uno de los puertos.", "No se ha configurado correctamente el enrutamiento entre VLANs (Inter-VLAN routing) en el switch de Capa 3.", "Las computadoras tienen máscaras de subred incorrectas."], answer: "No se ha configurado correctamente el enrutamiento entre VLANs (Inter-VLAN routing) en el switch de Capa 3.", explanation: "Para que diferentes VLANs se comuniquen, se requiere un dispositivo de Capa 3 (como un switch L3) que enrute el tráfico entre ellas (Inter-VLAN routing)." },
+            { question: "¿Cuál es el propósito principal del Protocolo de Árbol de Expansión (Spanning Tree Protocol - STP) en una red conmutada?", options: ["Aumentar la velocidad de transmisión de datos en la red.", "Prevenir bucles de conmutación (switching loops) en topologías de red redundantes.", "Asignar direcciones IP a los dispositivos de la red."], answer: "Prevenir bucles de conmutación (switching loops) en topologías de red redundantes.", explanation: "STP deshabilita lógicamente los enlaces redundantes para crear una topología libre de bucles, evitando así tormentas de broadcast." },
+            { question: "Un dispositivo se conecta a una red y envía un mensaje DHCPDISCOVER para obtener una dirección IP. ¿Qué dispositivo de red es el responsable de responder con un mensaje DHCPOFFER que contiene una dirección IP disponible?", options: ["El Gateway o puerta de enlace.", "El Servidor DNS.", "El Servidor DHCP."], answer: "El Servidor DHCP.", explanation: "El proceso DORA (Discover, Offer, Request, Acknowledge) de DHCP comienza con el cliente buscando (Discover) un servidor DHCP, que luego responde con una oferta (Offer)." },
+            { question: "Una característica distintiva de la configuración de direcciones en IPv6 es que un dispositivo puede autoconfigurar una dirección IP sin necesidad de un servidor DHCP. ¿Cómo se llama este proceso?", options: ["Configuración Estática.", "Autoconfiguración de Dirección sin Estado (SLAAC).", "Traducción de Direcciones de Red (NAT)."], answer: "Autoconfiguración de Dirección sin Estado (SLAAC).", explanation: "SLAAC permite a los dispositivos IPv6 crear su propia dirección global única combinando el prefijo de red del router con su propia ID de interfaz." },
+            { question: "Un administrador de red quiere mitigar ataques de suplantación de MAC (MAC spoofing) y evitar que dispositivos no autorizados se conecten a los puertos de un switch. ¿Qué característica de seguridad del switch debería implementar?", options: ["VLANs (Redes de Área Local Virtuales).", "Port Security (Seguridad de Puertos).", "EtherChannel (Agregación de Enlaces)."], answer: "Port Security (Seguridad de Puertos).", explanation: "Port Security permite restringir el acceso a un puerto de switch a direcciones MAC específicas, bloqueando cualquier otro dispositivo." },
+            { question: "¿Cuál es el protocolo de seguridad más robusto y recomendado actualmente para proteger una red Wi-Fi?", options: ["WEP (Wired Equivalent Privacy).", "WPA (Wi-Fi Protected Access).", "WPA3 (Wi-Fi Protected Access 3)."], answer: "WPA3 (Wi-Fi Protected Access 3).", explanation: "WPA3 es el estándar más reciente y seguro, ofreciendo una protección superior contra ataques de fuerza bruta y un cifrado más fuerte que sus predecesores." },
+            { question: "Un sistema de detección de intrusiones (IDS) tiene dificultades para analizar el tráfico de red en busca de patrones maliciosos porque la mayor parte del tráfico está cifrado con TLS. ¿Qué impacto tiene la criptografía en este escenario?", options: ["La criptografía mejora la capacidad del IDS para detectar amenazas.", "La criptografía oculta el contenido del tráfico (payload), lo que limita la visibilidad del IDS y dificulta el monitoreo de la seguridad.", "La criptografía solo afecta al rendimiento de la red, no al monitoreo."], answer: "La criptografía oculta el contenido del tráfico (payload), lo que limita la visibilidad del IDS y dificulta el monitoreo de la seguridad.", explanation: "El cifrado protege la confidencialidad, pero como efecto secundario, ciega a las herramientas de monitoreo que necesitan inspeccionar el contenido de los paquetes." },
+            { question: "En un peritaje informático, es fundamental mantener un registro detallado de quién ha manejado la evidencia, cuándo y con qué propósito, para garantizar su integridad y admisibilidad en un proceso legal. ¿Cómo se denomina a este registro documentado?", options: ["Imagen forense.", "Cadena de custodia.", "Análisis de malware."], answer: "Cadena de custodia.", explanation: "La cadena de custodia es crucial para demostrar que la evidencia no ha sido alterada y es admisible en un tribunal." },
+            { question: "Un tipo de malware se disfraza como un programa legítimo (por ejemplo, un videojuego o una herramienta de limpieza), pero al ser ejecutado, realiza acciones maliciosas en segundo plano, como abrir una puerta trasera en el sistema. ¿Qué clasificación recibe este tipo de software?", options: ["Gusano (Worm).", "Troyano (Trojan Horse).", "Adware."], answer: "Troyano (Trojan Horse).", explanation: "Al igual que el Caballo de Troya mitológico, este malware engaña al usuario para que lo instale voluntariamente al parecer inofensivo." },
+            { question: "Un empleado recibe un correo electrónico con un archivo adjunto de Word. Al abrirlo, un script malicioso (macro) se ejecuta e instala ransomware en el equipo. ¿Cuál es una medida preventiva clave contra este método de infección?", options: ["Desfragmentar el disco duro regularmente.", "Deshabilitar la ejecución automática de macros en documentos de Office provenientes de fuentes no confiables.", "Aumentar el tamaño del archivo de paginación del sistema."], answer: "Deshabilitar la ejecución automática de macros en documentos de Office provenientes de fuentes no confiables.", explanation: "Las macros son una vía de infección común. Deshabilitarlas por defecto de fuentes no confiables es una defensa fundamental." },
+            { question: "Una empresa establece una política de retención de datos que define que la información personal de los clientes debe ser eliminada de forma segura después de 5 años. Esta es una estrategia de:", options: ["Continuidad del negocio.", "Aseguramiento y protección de datos, cumpliendo con principios de gobernanza.", "Respuesta a incidentes."], answer: "Aseguramiento y protección de datos, cumpliendo con principios de gobernanza.", explanation: "Las políticas de retención son un pilar de la gobernanza de datos, asegurando que la información se maneje de acuerdo con las regulaciones y necesidades del negocio." },
+            { question: "Una propuesta de valor en un modelo de negocio, como el 'Canvas Business Model', se enfoca en:", options: ["Describir las actividades clave y los recursos necesarios para operar.", "Definir cómo el producto o servicio resuelve un problema o satisface una necesidad del cliente de una manera única.", "Analizar la estructura de costos y las fuentes de ingreso de la empresa."], answer: "Definir cómo el producto o servicio resuelve un problema o satisface una necesidad del cliente de una manera única.", explanation: "La propuesta de valor es el 'porqué' un cliente debería elegir tu producto sobre otros; es el beneficio central que ofreces." },
+            { question: "En Costa Rica, un emprendedor que desea formalizar su negocio como persona física o jurídica y facturar a sus clientes, debe realizar un proceso de inscripción fundamental ante ¿cuál institución gubernamental?", options: ["El Ministerio de Salud.", "El Ministerio de Hacienda (Tributación Directa).", "El Instituto Costarricense de Electricidad (ICE)."], answer: "El Ministerio de Hacienda (Tributación Directa).", explanation: "La inscripción como contribuyente ante Hacienda es el paso esencial para operar legalmente, declarar impuestos y emitir facturas electrónicas." }
+        ];
+
+        // --- LÓGICA DEL QUIZ ---
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        
+        const startBtn = document.getElementById('start-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const reviewBtn = document.getElementById('review-btn');
+        const backToResultsBtn = document.getElementById('back-to-results-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const scoreEl = document.getElementById('score');
+        const finalScoreEl = document.getElementById('final-score');
+        const feedbackMessageEl = document.getElementById('feedback-message');
+        const feedbackContainer = document.getElementById('feedback-container');
+        const feedbackTextEl = document.getElementById('feedback-text');
+        const timeLeftEl = document.getElementById('time-left');
+        const reviewContainer = document.getElementById('review-container');
+        const streakIndicator = document.getElementById('streak-indicator');
+        const streakCounterEl = document.getElementById('streak-counter');
+        const pointsPopup = document.getElementById('points-earned-popup');
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timerInterval;
+        let userAnswers = [];
+        let streakCounter = 0;
+        const BASE_POINTS = 10; // Puntos por segundo restante
+
+        function startQuiz() {
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            resultScreen.classList.add('hidden');
+            reviewScreen.classList.add('hidden');
+            currentQuestionIndex = 0;
+            score = 0;
+            streakCounter = 0;
+            userAnswers = [];
+            scoreEl.textContent = score;
+            updateStreakIndicator();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetState();
+            const question = questions[currentQuestionIndex];
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            questionTextEl.textContent = question.question;
+
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option-btn', 'w-full', 'p-4', 'text-left', 'bg-slate-700', 'rounded-lg', 'border', 'border-slate-600', 'hover:bg-slate-600', 'transition-colors', 'duration-200');
+                button.addEventListener('click', selectAnswer);
+                optionsContainer.appendChild(button);
+            });
+            startTimer();
+        }
+
+        function startTimer() {
+            let time = 30;
+            timeLeftEl.textContent = time;
+            timeLeftEl.parentElement.classList.remove('text-red-500');
+            timerInterval = setInterval(() => {
+                time--;
+                timeLeftEl.textContent = time;
+                if (time <= 5) {
+                    timeLeftEl.parentElement.classList.add('text-red-500');
+                }
+                if (time <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function handleTimeOut() {
+            streakCounter = 0;
+            updateStreakIndicator();
+            userAnswers.push({ question: questions[currentQuestionIndex].question, userAnswer: "Sin respuesta", correctAnswer: questions[currentQuestionIndex].answer, isCorrect: false, explanation: questions[currentQuestionIndex].explanation });
+            Array.from(optionsContainer.children).forEach(button => {
+                if (button.textContent === questions[currentQuestionIndex].answer) button.classList.add('correct');
+                button.disabled = true;
+            });
+            feedbackTextEl.textContent = `¡Se acabó el tiempo! La respuesta correcta era: ${questions[currentQuestionIndex].answer}`;
+            feedbackContainer.classList.remove('hidden');
+            enableNextButton();
+        }
+
+        function resetState() {
+            clearInterval(timerInterval);
+            nextBtn.disabled = true;
+            nextBtn.classList.remove('bg-cyan-600', 'hover:bg-cyan-700');
+            nextBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
+            feedbackContainer.classList.add('hidden');
+            while (optionsContainer.firstChild) {
+                optionsContainer.removeChild(optionsContainer.firstChild);
+            }
+        }
+
+        function selectAnswer(e) {
+            clearInterval(timerInterval);
+            const selectedBtn = e.target;
+            const isCorrect = selectedBtn.textContent === questions[currentQuestionIndex].answer;
+
+            userAnswers.push({ question: questions[currentQuestionIndex].question, userAnswer: selectedBtn.textContent, correctAnswer: questions[currentQuestionIndex].answer, isCorrect: isCorrect, explanation: questions[currentQuestionIndex].explanation });
+
+            if (isCorrect) {
+                streakCounter++;
+                const pointsEarned = parseInt(timeLeftEl.textContent) * BASE_POINTS;
+                const streakBonus = streakCounter >= 2 ? streakCounter : 1;
+                const totalPoints = pointsEarned * streakBonus;
+                score += totalPoints;
+                scoreEl.textContent = score;
+                selectedBtn.classList.add('correct');
+                showPointsPopup(`+${totalPoints}`);
+            } else {
+                streakCounter = 0;
+                selectedBtn.classList.add('incorrect');
+                feedbackTextEl.textContent = `Incorrecto. ${questions[currentQuestionIndex].explanation}`;
+                feedbackContainer.classList.remove('hidden');
+            }
+            
+            updateStreakIndicator();
+
+            Array.from(optionsContainer.children).forEach(button => {
+                if (button.textContent === questions[currentQuestionIndex].answer && !isCorrect) {
+                    button.classList.add('correct');
+                }
+                button.disabled = true;
+            });
+
+            enableNextButton();
+        }
+        
+        function updateStreakIndicator() {
+            if (streakCounter >= 2) {
+                streakCounterEl.textContent = streakCounter;
+                streakIndicator.classList.remove('scale-0');
+            } else {
+                streakIndicator.classList.add('scale-0');
+            }
+        }
+        
+        function showPointsPopup(text) {
+            pointsPopup.textContent = text;
+            pointsPopup.classList.remove('opacity-0');
+            // Reset animation
+            pointsPopup.style.animation = 'none';
+            pointsPopup.offsetHeight; /* trigger reflow */
+            pointsPopup.style.animation = null; 
+            pointsPopup.classList.add('points-popup');
+            setTimeout(() => {
+                pointsPopup.classList.add('opacity-0');
+            }, 1400);
+        }
+
+        function enableNextButton() {
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('bg-gray-500', 'cursor-not-allowed');
+            nextBtn.classList.add('bg-cyan-600', 'hover:bg-cyan-700');
+        }
+
+        function showNextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            finalScoreEl.textContent = score.toLocaleString('es-CR');
+
+            const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
+            const percentage = (correctAnswers / questions.length) * 100;
+            let feedback = '';
+            if (percentage >= 90) feedback = '¡Excelente trabajo! Tienes un dominio impresionante de los conceptos.';
+            else if (percentage >= 70) feedback = '¡Muy bien! Tienes una base sólida. Sigue repasando para perfeccionar.';
+            else if (percentage >= 50) feedback = '¡Vas por buen camino! Identifica las áreas que necesitas reforzar y sigue estudiando.';
+            else feedback = 'Es un buen comienzo. Este simulacro te ayudará a saber qué temas necesitas repasar más.';
+            feedbackMessageEl.textContent = feedback;
+        }
+
+        function showReview() {
+            resultScreen.classList.add('hidden');
+            reviewScreen.classList.remove('hidden');
+            reviewContainer.innerHTML = '';
+
+            userAnswers.forEach((answer, index) => {
+                const reviewItem = document.createElement('div');
+                reviewItem.classList.add('p-4', 'bg-slate-900', 'rounded-lg', answer.isCorrect ? 'review-correct' : 'review-incorrect');
+                
+                let userAnswerHTML = answer.isCorrect 
+                    ? `<p class="text-green-400">Tu respuesta: ${answer.userAnswer}</p>`
+                    : `<p class="text-red-400">Tu respuesta: ${answer.userAnswer}</p><p class="text-green-400">Respuesta correcta: ${answer.correctAnswer}</p>`;
+
+                reviewItem.innerHTML = `
+                    <p class="font-bold text-slate-300 mb-2">Pregunta ${index + 1}: ${answer.question}</p>
+                    ${userAnswerHTML}
+                    <p class="text-slate-400 mt-2 text-sm"><em>Explicación: ${answer.explanation}</em></p>
+                `;
+                reviewContainer.appendChild(reviewItem);
+            });
+        }
+
+        startBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', showNextQuestion);
+        restartBtn.addEventListener('click', startQuiz);
+        reviewBtn.addEventListener('click', showReview);
+        backToResultsBtn.addEventListener('click', () => {
+            reviewScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+        });
+
+    </script>
+</body>
+</html>

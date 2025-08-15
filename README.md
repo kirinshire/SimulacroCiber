@@ -11,8 +11,8 @@ Este repositorio contiene un simulacro completo de la prueba nacional estandariz
 La creación de este simulacro se basa estricta y exclusivamente en la **Tabla de Especificaciones oficial del MEP** para la especialidad.
 
 * **Documento de Referencia:** Tabla de Especificaciones para la Prueba Nacional Escrita Estandarizada Comprensiva de Especialidades Técnicas 2025.
-* [cite_start]**Especialidad:** Ciberseguridad[cite: 7].
-* [cite_start]**Código DGEC:** 5210[cite: 8].
+* **Especialidad:** Ciberseguridad.
+* **Código DGEC:** 5210.
 
 El estilo y la dificultad de las preguntas están inspirados en exámenes nacionales anteriores para asegurar una experiencia lo más cercana posible a la realidad.
 
@@ -23,11 +23,11 @@ El examen simulado sigue la distribución de ítems definida por el MEP, asegura
 * **Total de Ítems:** 63 preguntas de selección única.
 * **Niveles Cubiertos:** Abarca los saberes esenciales de Décimo, Undécimo y Duodécimo año.
 * **Subáreas Incluidas:**
-    * [cite_start]Tecnologías de la información[cite: 30].
-    * [cite_start]Programación y pruebas de la seguridad del software[cite: 34, 44, 52].
-    * [cite_start]Operaciones ciberseguras[cite: 54, 59, 76, 82, 92].
-    * [cite_start]Emprendimiento e innovación aplicada[cite: 94].
-    * [cite_start]Seguridad de la información y gestión administrativa[cite: 98].
+    * Tecnologías de la información.
+    * Programación y pruebas de la seguridad del software.
+    * Operaciones ciberseguras.
+    * Emprendimiento e innovación aplicada.
+    * Seguridad de la información y gestión administrativa.
 
 ## 🚀 Modo de Uso
 
